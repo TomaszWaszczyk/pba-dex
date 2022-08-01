@@ -1,18 +1,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use codec::{Decode, Encode};
+
 /// Edit this file to define custom logic or remove it if it is not needed.
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
 #[cfg(test)]
-mod mock;
-
-#[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct Token<Hash, Balance> {
+    pub hash: Hash,
+    pub symbol: Vec<u8>,
+    pub total_supply: Balance,
+}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -30,12 +34,10 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/v3/runtime/storage
+
 	#[pallet::storage]
 	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
+
 	pub type Something<T> = StorageValue<_, u32>;
 
 	// Pallets use events to inform users when important changes are made.
@@ -43,19 +45,10 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, T::AccountId),
+		TokensStored(u32, T::AccountId),
+		Transfered(T::AccountId, T::AccountId, T::Hash, ()),
 	}
 
-	// Errors inform users that something went wrong.
-	#[pallet::error]
-	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
-	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsics", which are often compared to transactions.
@@ -74,8 +67,6 @@ pub mod pallet {
 			// Update storage.
 			<Something<T>>::put(something);
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
 			// Return a successful DispatchResultWithPostInfo
 			Ok(())
 		}
@@ -98,5 +89,11 @@ pub mod pallet {
 				},
 			}
 		}
+	}
+
+	#[pallet::error]
+	pub enum Error<T> {
+		NoneValue,
+		StorageOverflow,
 	}
 }
